@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using PlayFab;
 using PlayFab.ClientModels;
@@ -17,23 +16,20 @@ public class PlayfabManager : MonoBehaviour
     public TMP_InputField loginUsernameInput;
     public TMP_InputField loginPasswordInput;
 
-    [Header("Login - Painel")]
+    [Header("Painel")]
     public GameObject loginPanel;
     public GameObject gamePanel;
 
     [Header("Feedback")]
     public TMP_Text statusText;
 
-    [Header("Jardins")]
-    public GardenBrowserUI gardenBrowserUI;
-
     public void OnRegisterButton()
     {
         var request = new RegisterPlayFabUserRequest
         {
-            Username               = usernameInput.text,
-            Email                  = emailInput.text,
-            Password               = passwordInput.text,
+            Username                   = usernameInput.text,
+            Email                      = emailInput.text,
+            Password                   = passwordInput.text,
             RequireBothUsernameAndEmail = true
         };
 
@@ -61,27 +57,12 @@ public class PlayfabManager : MonoBehaviour
 
     void OnLoginSuccess(LoginResult result)
     {
-        statusText.text  = "Login realizado com sucesso!";
         CurrentPlayFabId = result.PlayFabId;
+        statusText.text  = "Login realizado com sucesso!";
         Debug.Log("Login OK: " + result.PlayFabId);
 
         if (loginPanel != null) loginPanel.SetActive(false);
         if (gamePanel  != null) gamePanel.SetActive(true);
-
-        if (gardenBrowserUI != null)
-            gardenBrowserUI.ShowBrowseButton();
-
-        string username = loginUsernameInput.text;
-        PlayFabClientAPI.ExecuteCloudScript(new ExecuteCloudScriptRequest
-        {
-            FunctionName      = "RegisterPlayer",
-            FunctionParameter = new { displayName = username }
-        },
-        r => Debug.Log("Jogador registrado."),
-        e => Debug.LogWarning("Erro ao registrar: " + e.ErrorMessage));
-
-        if (FlowerSaveManager.Instance != null)
-            FlowerSaveManager.Instance.Load(flowers => FlowerPlacer.Instance?.RestoreFlowers(flowers));
     }
 
     void OnError(PlayFabError error)
