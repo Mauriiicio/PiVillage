@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class PetAnimator : MonoBehaviour
 {
+    public enum BehaviorState { Normal, Fleeing, Sick, Angry, Sleeping }
+
     private PetData        data;
     private SpriteRenderer sr;
 
     [Header("Animacao")]
-    public float framesPerSecond = 10f;
+    public float framesPerSecond     = 10f;
+    public float fleeSpeedMultiplier = 2f;
 
     private float moveSpeed;
     private float minWalkTime;
@@ -20,7 +23,8 @@ public class PetAnimator : MonoBehaviour
     private float boundX;
     private float boundY;
 
-    private Coroutine animCoroutine;
+    private Coroutine     animCoroutine;
+    private BehaviorState currentState = BehaviorState.Normal;
 
     public void Init(PetData petData, float bX, float bY, float speed,
                      float minWalk, float maxWalk, float minRest, float maxRest,
@@ -41,28 +45,71 @@ public class PetAnimator : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Loop principal de comportamento
+    // API pública de estado
+    // -------------------------------------------------------
+
+    // Chamado pelo PetStatusManager sempre que o estado do pet mudar
+    public void UpdateFromPetState(PetState state)
+    {
+        if (state.isSick)  { SetBehaviorState(BehaviorState.Sick);   return; }
+        if (state.isAngry) { SetBehaviorState(BehaviorState.Angry);  return; }
+        // Só volta ao normal se não estava no meio de um banho
+        if (currentState != BehaviorState.Fleeing)
+            SetBehaviorState(BehaviorState.Normal);
+    }
+
+    // Usados pela mecânica de banho
+    public void StartFleeing() => SetBehaviorState(BehaviorState.Fleeing);
+    public void StopFleeing()  => SetBehaviorState(BehaviorState.Normal);
+
+    // Usado pelo PetClickHandler para acordar o pet
+    public void WakeUp()
+    {
+        if (currentState == BehaviorState.Sleeping)
+            SetBehaviorState(BehaviorState.Normal);
+    }
+
+    void SetBehaviorState(BehaviorState newState)
+    {
+        if (currentState == newState) return;
+
+        bool wasSleeping = currentState == BehaviorState.Sleeping;
+        currentState = newState;
+
+        StopAllCoroutines();
+        animCoroutine = null;
+
+        if (wasSleeping)
+            PetStatusManager.Instance?.OnPetSleepEnd();
+
+        switch (newState)
+        {
+            case BehaviorState.Normal:   StartCoroutine(BehaviorLoop()); break;
+            case BehaviorState.Fleeing:  StartCoroutine(FleeLoop());     break;
+            case BehaviorState.Sick:     StartCoroutine(SickLoop());     break;
+            case BehaviorState.Angry:    StartCoroutine(AngryLoop());    break;
+            case BehaviorState.Sleeping: StartCoroutine(SleepLoop());    break;
+        }
+    }
+
+    // -------------------------------------------------------
+    // Loops de comportamento
     // -------------------------------------------------------
 
     IEnumerator BehaviorLoop()
     {
         while (true)
         {
-            // --- Fase 1: Andar ---
             float walkTime = Random.Range(minWalkTime, maxWalkTime);
             Vector2 dir    = RandomDirection();
-
             FlipSprite(dir.x);
             yield return StartCoroutine(WalkFor(dir, walkTime));
 
-            // --- Fase 2: Sentar ---
             FlipSprite(0f);
             yield return StartCoroutine(PlayOnce(data.sitting));
 
-            // --- Fase 3: Descansar com acao aleatoria no meio ---
             float restTime = Random.Range(minRestTime, maxRestTime);
             float actionAt = Random.Range(restTime * 0.2f, restTime * 0.6f);
-
             yield return new WaitForSeconds(actionAt);
 
             PetAnimation action = PickRandom();
@@ -76,88 +123,147 @@ public class PetAnimator : MonoBehaviour
                     yield return StartCoroutine(PlayOnce(action.frames));
                     yield return new WaitForSeconds(holdTime);
                 }
-                // Volta ao sitting apos a acao
                 yield return StartCoroutine(PlayOnce(data.sitting));
             }
 
             float remaining = restTime - actionAt;
-            if (remaining > 0f)
-                yield return new WaitForSeconds(remaining);
+            if (remaining > 0f) yield return new WaitForSeconds(remaining);
+
+            // 30% de chance de dormir após o descanso
+            if (Random.value < 0.3f)
+            {
+                SetBehaviorState(BehaviorState.Sleeping);
+                yield break;
+            }
         }
     }
 
-    // Anda na direcao dada pelo tempo definido
     IEnumerator WalkFor(Vector2 dir, float duration)
     {
         SetAnimation(data.walk);
         float elapsed = 0f;
-
         while (elapsed < duration)
         {
             Vector3 next = transform.position + (Vector3)(dir * moveSpeed * Time.deltaTime);
-
-            // Rebate nas bordas
             if (Mathf.Abs(next.x) > boundX) { dir.x = -dir.x; FlipSprite(dir.x); }
             if (Mathf.Abs(next.y) > boundY) { dir.y = -dir.y; }
-
             transform.position = new Vector3(
                 Mathf.Clamp(next.x, -boundX, boundX),
-                Mathf.Clamp(next.y, -boundY, boundY),
-                0f
-            );
-
+                Mathf.Clamp(next.y, -boundY, boundY), 0f);
             elapsed += Time.deltaTime;
             yield return null;
         }
-
         StopAnimation();
     }
 
-    // Fica em idle pelo tempo definido, disparando uma acao aleatoria no meio
-    IEnumerator RestFor(float duration)
+    // Pet foge correndo (banho)
+    IEnumerator FleeLoop()
     {
-        float elapsed = 0f;
-        float actionAt = Random.Range(duration * 0.2f, duration * 0.6f);
-        bool  actionDone = false;
+        Sprite[] runFrames = (data.run != null && data.run.Length > 0) ? data.run : data.walk;
+        SetAnimation(runFrames);
 
-        SetAnimation(data.idle);
+        Vector2 dir = RandomDirection();
+        FlipSprite(dir.x);
 
-        while (elapsed < duration)
+        while (currentState == BehaviorState.Fleeing)
         {
-            if (!actionDone && elapsed >= actionAt)
-            {
-                actionDone = true;
-                PetAnimation action = PickRandom();
-                if (action != null)
-                {
-                    StopAnimation();
-                    float holdTime = Random.Range(minActionHold, maxActionHold);
+            Vector3 next = transform.position + (Vector3)(dir * moveSpeed * fleeSpeedMultiplier * Time.deltaTime);
+            if (Mathf.Abs(next.x) > boundX) { dir.x = -dir.x; FlipSprite(dir.x); }
+            if (Mathf.Abs(next.y) > boundY) { dir.y = -dir.y; }
+            transform.position = new Vector3(
+                Mathf.Clamp(next.x, -boundX, boundX),
+                Mathf.Clamp(next.y, -boundY, boundY), 0f);
+            yield return null;
+        }
+    }
 
-                    if (action.loop)
-                    {
-                        // Loopeia pelo tempo definido
-                        yield return StartCoroutine(PlayLoop(action.frames, holdTime));
-                    }
-                    else
-                    {
-                        // Toca uma vez e segura o ultimo frame
-                        yield return StartCoroutine(PlayOnce(action.frames));
-                        yield return new WaitForSeconds(holdTime);
-                    }
+    // Pet fica deitado enquanto doente — toca uma vez e segura o último frame
+    IEnumerator SickLoop()
+    {
+        Sprite[] frames = GetLyingFrames();
 
-                    SetAnimation(data.idle);
-                }
-            }
+        if (frames != null && frames.Length > 0)
+        {
+            yield return StartCoroutine(PlayOnce(frames));
+            // Segura o último frame parado
+            sr.sprite = frames[frames.Length - 1];
+        }
 
+        while (currentState == BehaviorState.Sick) yield return null;
+    }
+
+    // Pet late/mia repetidamente enquanto bravo
+    IEnumerator AngryLoop()
+    {
+        Sprite[] frames = GetBarkFrames();
+
+        while (currentState == BehaviorState.Angry)
+        {
+            if (frames != null && frames.Length > 0)
+                yield return StartCoroutine(PlayOnce(frames));
+            else
+                yield return new WaitForSeconds(1f);
+
+            yield return new WaitForSeconds(0.6f); // pausa entre latidos
+        }
+    }
+
+    // Pet dorme — toca animação uma vez, segura último frame por até 60s
+    IEnumerator SleepLoop()
+    {
+        PetStatusManager.Instance?.OnPetSleepStart();
+
+        Sprite[] frames = GetSleepFrames();
+        if (frames != null && frames.Length > 0)
+        {
+            yield return StartCoroutine(PlayOnce(frames));
+            sr.sprite = frames[frames.Length - 1]; // segura último frame
+        }
+
+        float elapsed = 0f;
+        while (currentState == BehaviorState.Sleeping && elapsed < 60f)
+        {
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        StopAnimation();
+        if (currentState == BehaviorState.Sleeping)
+            SetBehaviorState(BehaviorState.Normal);
     }
 
     // -------------------------------------------------------
-    // Controle de animacao
+    // Helpers de animação por tipo de pet
+    // -------------------------------------------------------
+
+    Sprite[] GetLyingFrames()
+    {
+        var cat = data as CatData;
+        if (cat != null && cat.laying   != null && cat.laying.Length   > 0) return cat.laying;
+        var dog = data as DogData;
+        if (dog != null && dog.lyingDown != null && dog.lyingDown.Length > 0) return dog.lyingDown;
+        return data.idle;
+    }
+
+    Sprite[] GetBarkFrames()
+    {
+        var dog = data as DogData;
+        if (dog != null && dog.bark != null && dog.bark.Length > 0) return dog.bark;
+        var cat = data as CatData;
+        if (cat != null && cat.meow != null && cat.meow.Length > 0) return cat.meow;
+        return data.idle;
+    }
+
+    Sprite[] GetSleepFrames()
+    {
+        var dog = data as DogData;
+        if (dog != null && dog.sleeping  != null && dog.sleeping.Length  > 0) return dog.sleeping;
+        var cat = data as CatData;
+        if (cat != null && cat.sleeping1 != null && cat.sleeping1.Length > 0) return cat.sleeping1;
+        return data.idle;
+    }
+
+    // -------------------------------------------------------
+    // Controle de animação
     // -------------------------------------------------------
 
     void SetAnimation(Sprite[] frames)
@@ -169,11 +275,7 @@ public class PetAnimator : MonoBehaviour
 
     void StopAnimation()
     {
-        if (animCoroutine != null)
-        {
-            StopCoroutine(animCoroutine);
-            animCoroutine = null;
-        }
+        if (animCoroutine != null) { StopCoroutine(animCoroutine); animCoroutine = null; }
     }
 
     IEnumerator LoopFrames(Sprite[] frames)
@@ -214,7 +316,7 @@ public class PetAnimator : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Helpers
+    // Helpers gerais
     // -------------------------------------------------------
 
     Vector2 RandomDirection()

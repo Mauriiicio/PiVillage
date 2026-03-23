@@ -53,6 +53,7 @@ public class PetSelectionManager : MonoBehaviour
 
     private PetData selectedPet;
     private Image   selectedSlotImage;
+    private int     selectedPetIndex;
 
     // Layout — altere aqui no codigo se precisar ajustar
     private const float  SlotWidth   = 450f;
@@ -136,13 +137,14 @@ public class PetSelectionManager : MonoBehaviour
 
             for (int j = 0; j < Columns && (i + j) < pets.Length; j++)
             {
-                PetData pet = pets[i + j];
-                if (pet != null) CreateSlot(row.transform, pet);
+                int     idx = i + j;
+                PetData pet = pets[idx];
+                if (pet != null) CreateSlot(row.transform, pet, idx);
             }
         }
     }
 
-    void CreateSlot(Transform parent, PetData pet)
+    void CreateSlot(Transform parent, PetData pet, int index)
     {
         GameObject slot = new GameObject(pet.type.ToString());
         slot.transform.SetParent(parent, false);
@@ -179,9 +181,10 @@ public class PetSelectionManager : MonoBehaviour
                 StartCoroutine(AnimateIdle(petImg, pet.idle));
         }
 
-        PetData capturedPet = pet;
-        Image   capturedBg  = slotBg;
-        btn.onClick.AddListener(() => SelectPet(capturedPet, capturedBg));
+        PetData capturedPet   = pet;
+        Image   capturedBg    = slotBg;
+        int     capturedIndex = index;
+        btn.onClick.AddListener(() => SelectPet(capturedPet, capturedBg, capturedIndex));
     }
 
     // -------------------------------------------------------
@@ -206,18 +209,19 @@ public class PetSelectionManager : MonoBehaviour
     // Selecao
     // -------------------------------------------------------
 
-    void SelectPet(PetData pet, Image slotBg)
+    void SelectPet(PetData pet, Image slotBg, int index)
     {
         if (selectedSlotImage != null)
             selectedSlotImage.color = colorNormal;
 
         selectedPet       = pet;
         selectedSlotImage = slotBg;
+        selectedPetIndex  = index;
         slotBg.color      = colorSelected;
 
         selectButton.interactable = true;
 
-        Debug.Log("Pet destacado: " + pet.type);
+        Debug.Log("Pet destacado: " + pet.type + " index=" + index);
     }
 
     public void OnSelectButton()
@@ -241,27 +245,83 @@ public class PetSelectionManager : MonoBehaviour
 
         // Spawna o pet no mundo
         SpawnPet(petName);
+
+        // Registra o pet no PlayFab para este jogador
+        if (PetStatusManager.Instance != null)
+            PetStatusManager.Instance.CreatePet(petName, selectedPet.type.ToString(), selectedPetIndex);
     }
 
     void SpawnPet(string petName)
     {
         if (selectedPet == null) return;
+        SpawnPetData(petName, selectedPet);
+    }
 
+    // Chamado pelo PetStatusManager ao reentrar no jogo com pet já salvo
+    public void SpawnPetFromSave(PetState state)
+    {
+        // Encontra o PetData correto pelo tipo e índice salvo
+        PetData[] array = (state.petType == "Cat") ? cats : dogs;
+        int       idx   = Mathf.Clamp(state.petIndex, 0, array.Length - 1);
+        PetData   data  = array[idx];
+
+        if (data == null)
+        {
+            Debug.LogError("[PetSelection] PetData não encontrado para tipo=" + state.petType + " index=" + state.petIndex);
+            return;
+        }
+
+        // Mostra painel de jogo e esconde seleção
+        if (selectionPanel != null) selectionPanel.SetActive(false);
+        if (namingPanel    != null) namingPanel.SetActive(false);
+        if (gamePanel      != null) gamePanel.SetActive(true);
+        if (petNameText    != null) petNameText.text = state.petName;
+
+        selectedPet = data;
+        SpawnPetData(state.petName, data);
+    }
+
+    void SpawnPetData(string petName, PetData data)
+    {
         Vector3 spawnPos = petSpawnPoint != null ? petSpawnPoint.position : Vector3.zero;
 
-        GameObject pet       = new GameObject(petName);
+        GameObject pet           = new GameObject(petName);
         pet.transform.position   = spawnPos;
         pet.transform.localScale = Vector3.one;
 
         SpriteRenderer sr = pet.AddComponent<SpriteRenderer>();
         sr.sortingOrder   = 1;
 
+        // Collider para detectar clique do jogador
+        BoxCollider2D col     = pet.AddComponent<BoxCollider2D>();
+        col.size              = new Vector2(1f, 1f);
+        col.isTrigger         = true;
+
+        // Handler de interação por clique
+        PetClickHandler clickHandler = pet.AddComponent<PetClickHandler>();
+
+        // Emoticon flutuante acima da cabeça (começa desativado)
+        GameObject emoticonGO              = new GameObject("Emoticon");
+        emoticonGO.transform.SetParent(pet.transform, false);
+        emoticonGO.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+        SpriteRenderer emoticonSR          = emoticonGO.AddComponent<SpriteRenderer>();
+        emoticonSR.sortingOrder            = 2;
+        emoticonGO.SetActive(false);
+
         PetAnimator anim = pet.AddComponent<PetAnimator>();
-        anim.Init(selectedPet, mapBoundX, mapBoundY, moveSpeed,
+        anim.Init(data, mapBoundX, mapBoundY, moveSpeed,
                   minWalkTime, maxWalkTime, minRestTime, maxRestTime,
                   minActionHold, maxActionHold);
 
-        Debug.Log("Pet spawnado: " + petName + " | " + selectedPet.type);
+        // Registra referências no PetStatusManager
+        if (PetStatusManager.Instance != null)
+            PetStatusManager.Instance.RegisterPet(anim, clickHandler, emoticonSR);
+
+        // Registra transform no PetPoopManager
+        if (PetPoopManager.Instance != null)
+            PetPoopManager.Instance.RegisterPet(pet.transform);
+
+        Debug.Log("Pet spawnado: " + petName + " | " + data.type);
     }
 
 }

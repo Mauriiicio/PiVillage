@@ -113,15 +113,15 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: emotions_0
+      name: emotions_doente
       rect:
         serializedVersion: 2
-        x: 0
-        y: 76
+        x: 64
+        y: 38
         width: 32
         height: 38
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -135,81 +135,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: emotions_1
-      rect:
-        serializedVersion: 2
-        x: 32
-        y: 76
-        width: 32
-        height: 38
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 2d0709a7bf671654ebe08e96b17ab220
-      internalID: 1198423900
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: emotions_2
-      rect:
-        serializedVersion: 2
-        x: 64
-        y: 76
-        width: 32
-        height: 38
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: 1c1e14ce04b861f449f00acb6531b7b8
-      internalID: 1371228751
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: emotions_3
-      rect:
-        serializedVersion: 2
-        x: 96
-        y: 76
-        width: 32
-        height: 38
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: dfcbad30f57edc8408f1e0a58d3c66dd
-      internalID: 1460040110
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: emotions_4
+      name: emotions_trsite
       rect:
         serializedVersion: 2
         x: 128
-        y: 76
+        y: 77
         width: 32
-        height: 38
+        height: 37
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -223,15 +157,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: emotions_5
+      name: emotions_Carinho
       rect:
         serializedVersion: 2
         x: 160
-        y: 76
+        y: 77
         width: 32
-        height: 38
+        height: 37
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       customData: 
       outline: []
@@ -240,6 +174,138 @@ TextureImporter:
       bones: []
       spriteID: 210f5c6f6644071449da67d1158e5592
       internalID: -828135495
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emotions_6
+      rect:
+        serializedVersion: 2
+        x: 192
+        y: 77
+        width: 32
+        height: 37
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: cf6ba9ee90db33645b451be051a48a6c
+      internalID: -892821327
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emotions_Banho
+      rect:
+        serializedVersion: 2
+        x: 224
+        y: 77
+        width: 32
+        height: 37
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 15fed9ee3ddf0b040a0dd7cf57920aa2
+      internalID: -1335665877
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emotions_barck
+      rect:
+        serializedVersion: 2
+        x: 160
+        y: 38
+        width: 32
+        height: 39
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: af24538c9b841eb4f896d7494039db4b
+      internalID: -1953528188
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emotionsLatindo
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 0
+        width: 32
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 65ca3bf126225d04cb9ebf993995000e
+      internalID: -454533021
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emotions_Dormindo
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 38
+        width: 32
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: d6811c127bc4b2941aff584ec1f52b43
+      internalID: -1279785529
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: emotions_feliz
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 0
+        width: 32
+        height: 38
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dab1502b349a9b041a89353fb6fa03f1
+      internalID: -840147924
       vertices: []
       indices: 
       edges: []
@@ -258,12 +324,19 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      emotions_0: 1623372704
+      emotionsLatindo: -454533021
       emotions_1: 1198423900
       emotions_2: 1371228751
       emotions_3: 1460040110
-      emotions_4: -260376705
-      emotions_5: -828135495
+      emotions_6: -892821327
+      emotions_8: 1974562604
+      emotions_Banho: -1335665877
+      emotions_Carinho: -828135495
+      emotions_Dormindo: -1279785529
+      emotions_barck: -1953528188
+      emotions_doente: 1623372704
+      emotions_feliz: -840147924
+      emotions_trsite: -260376705
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

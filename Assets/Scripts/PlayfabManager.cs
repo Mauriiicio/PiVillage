@@ -63,6 +63,10 @@ public class PlayfabManager : MonoBehaviour
 
         if (loginPanel != null) loginPanel.SetActive(false);
         if (gamePanel  != null) gamePanel.SetActive(true);
+
+        // Carrega estado do pet após login
+        if (PetStatusManager.Instance != null)
+            PetStatusManager.Instance.OnLoginComplete();
     }
 
     void OnError(PlayFabError error)
