@@ -1,0 +1,468 @@
+fileFormatVersion: 2
+guid: a5b172be316725b4eb770d24429b13fc
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -4367237397020418947
+    second: Cat-5-Stretching_0
+  - first:
+      213: 4900883863617895335
+    second: Cat-5-Stretching_1
+  - first:
+      213: -1945671092105016111
+    second: Cat-5-Stretching_2
+  - first:
+      213: 7658081701495139730
+    second: Cat-5-Stretching_3
+  - first:
+      213: 3081558811521005708
+    second: Cat-5-Stretching_4
+  - first:
+      213: -3264435719286788814
+    second: Cat-5-Stretching_5
+  - first:
+      213: -2351255255425662734
+    second: Cat-5-Stretching_6
+  - first:
+      213: -5028415919503709266
+    second: Cat-5-Stretching_7
+  - first:
+      213: -6375381728610888914
+    second: Cat-5-Stretching_8
+  - first:
+      213: -958594905986982998
+    second: Cat-5-Stretching_9
+  - first:
+      213: -1484012900454145552
+    second: Cat-5-Stretching_10
+  - first:
+      213: -5263399170666149484
+    second: Cat-5-Stretching_11
+  - first:
+      213: 2501887493842741155
+    second: Cat-5-Stretching_12
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 16
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Cat-5-Stretching_0
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 17
+        width: 22
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d7cdbccd9b47463c0800000000000000
+      internalID: -4367237397020418947
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_1
+      rect:
+        serializedVersion: 2
+        x: 64
+        y: 17
+        width: 22
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7ab736078ef630440800000000000000
+      internalID: 4900883863617895335
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_2
+      rect:
+        serializedVersion: 2
+        x: 112
+        y: 17
+        width: 23
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1dc855943769ff4e0800000000000000
+      internalID: -1945671092105016111
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_3
+      rect:
+        serializedVersion: 2
+        x: 161
+        y: 17
+        width: 23
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 29d6986bbb8f64a60800000000000000
+      internalID: 7658081701495139730
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_4
+      rect:
+        serializedVersion: 2
+        x: 211
+        y: 17
+        width: 23
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c883f2b8965e3ca20800000000000000
+      internalID: 3081558811521005708
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_5
+      rect:
+        serializedVersion: 2
+        x: 261
+        y: 17
+        width: 23
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 23d60df420562b2d0800000000000000
+      internalID: -3264435719286788814
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_6
+      rect:
+        serializedVersion: 2
+        x: 311
+        y: 17
+        width: 24
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2f0451c7dc9ae5fd0800000000000000
+      internalID: -2351255255425662734
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_7
+      rect:
+        serializedVersion: 2
+        x: 361
+        y: 17
+        width: 24
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: eabef07ec5a773ab0800000000000000
+      internalID: -5028415919503709266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_8
+      rect:
+        serializedVersion: 2
+        x: 410
+        y: 17
+        width: 25
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e23d1a698181687a0800000000000000
+      internalID: -6375381728610888914
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_9
+      rect:
+        serializedVersion: 2
+        x: 460
+        y: 17
+        width: 25
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: aab9529030362b2f0800000000000000
+      internalID: -958594905986982998
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_10
+      rect:
+        serializedVersion: 2
+        x: 510
+        y: 17
+        width: 25
+        height: 15
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0f16552312ab76be0800000000000000
+      internalID: -1484012900454145552
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_11
+      rect:
+        serializedVersion: 2
+        x: 561
+        y: 17
+        width: 24
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 499cb594756a4f6b0800000000000000
+      internalID: -5263399170666149484
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Cat-5-Stretching_12
+      rect:
+        serializedVersion: 2
+        x: 612
+        y: 17
+        width: 23
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3a72d7a8b6d78b220800000000000000
+      internalID: 2501887493842741155
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Cat-5-Stretching_0: -4367237397020418947
+      Cat-5-Stretching_1: 4900883863617895335
+      Cat-5-Stretching_10: -1484012900454145552
+      Cat-5-Stretching_11: -5263399170666149484
+      Cat-5-Stretching_12: 2501887493842741155
+      Cat-5-Stretching_2: -1945671092105016111
+      Cat-5-Stretching_3: 7658081701495139730
+      Cat-5-Stretching_4: 3081558811521005708
+      Cat-5-Stretching_5: -3264435719286788814
+      Cat-5-Stretching_6: -2351255255425662734
+      Cat-5-Stretching_7: -5028415919503709266
+      Cat-5-Stretching_8: -6375381728610888914
+      Cat-5-Stretching_9: -958594905986982998
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(grep -v \"\\\\.meta$\")"
+      "Bash(grep -v \"\\\\.meta$\")",
+      "Bash(find C:UsersmauriOneDriveDocumentosGitHubPiVillageAssets -type f -name *.prefab -o -type f -name *.anim -o -type f -name *.controller)"
     ]
   }
 }
