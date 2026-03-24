@@ -64,6 +64,15 @@ public class PlayfabManager : MonoBehaviour
         if (loginPanel != null) loginPanel.SetActive(false);
         if (gamePanel  != null) gamePanel.SetActive(true);
 
+        // Registra jogador no diretório global
+        var reg = new PlayFab.ClientModels.ExecuteCloudScriptRequest
+        {
+            FunctionName      = "RegisterPlayer",
+            FunctionParameter = new { displayName = result.PlayFabId },
+            GeneratePlayStreamEvent = false
+        };
+        PlayFabClientAPI.ExecuteCloudScript(reg, null, null);
+
         // Carrega estado do pet após login
         if (PetStatusManager.Instance != null)
             PetStatusManager.Instance.OnLoginComplete();

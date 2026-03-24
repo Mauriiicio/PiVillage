@@ -43,7 +43,7 @@ class CloudGetStateResult
 {
     public bool     exists   = false;
     public PetState state    = null;
-    public int      newPoops = 0;   // cocôs acumulados no servidor desde o último login
+    public int      newPoops = 0;
 }
 
 [Serializable]
@@ -62,6 +62,14 @@ class CreatePetArgs
     public int    petIndex;
 }
 
+// Usado na ação de visita
+[Serializable]
+class CareForOtherArgs
+{
+    public string targetPlayerId;
+    public string action;
+}
+
 public class PetStatusManager : MonoBehaviour
 {
     public static PetStatusManager Instance { get; private set; }
@@ -77,30 +85,40 @@ public class PetStatusManager : MonoBehaviour
     public PetSelectionManager selectionManager;
 
     [Header("Emoticons")]
-    public Sprite bathEmoticon;     // Banho    — emotions.png
-    public Sprite angryEmoticon;    // Bravo    — emotions.png
-    public Sprite happyEmoticon;    // Feliz    — emotions.png
-    public Sprite sickEmoticon;     // Doente   — emotions.png
-    public Sprite barkEmoticon;     // Latido   — emotions.png
-    public Sprite sleepingEmoticon; // Dormindo — emotions.png
-    public Sprite deadEmoticon;     // Morto    — emotions.png
+    public Sprite bathEmoticon;
+    public Sprite angryEmoticon;
+    public Sprite happyEmoticon;
+    public Sprite sickEmoticon;
+    public Sprite barkEmoticon;
+    public Sprite sleepingEmoticon;
+    public Sprite deadEmoticon;
 
-    // Estado atual do pet, disponível para outros scripts lerem
+    // Estado atual do pet próprio
     public PetState CurrentState { get; private set; }
 
-    // Referências ao pet ativo (registradas ao spawnar)
+    // Referências ao pet ativo
     private PetAnimator     petAnimator;
     private PetClickHandler petClickHandler;
     private SpriteRenderer  emoticonRenderer;
 
-    // Controle do emoticon passivo vs. breve
-    private Sprite    passiveEmoticon;   // emoticon que deve ficar visível enquanto o estado durar
-    private bool      showingBrief;      // true enquanto um emoticon breve está sendo exibido
+    // Controle de emoticon passivo vs. breve
+    private Sprite    passiveEmoticon;
+    private bool      showingBrief;
     private Coroutine briefCoroutine;
 
     private bool   isBusy;
     private bool   isSleeping;
     private string lastAction;
+
+    // ── Modo Visita ──────────────────────────────────────────────────────────
+    private bool     isVisitMode      = false;
+    private string   visitTargetId    = null;
+    private PetState visitTargetState = null;
+
+    // Refs do pet próprio, salvas enquanto estiver em modo visita
+    private PetAnimator     ownPetAnimator;
+    private PetClickHandler ownPetClickHandler;
+    private SpriteRenderer  ownPetEmoticonRenderer;
 
     // -------------------------------------------------------
     // Inicialização
@@ -123,13 +141,11 @@ public class PetStatusManager : MonoBehaviour
         InvokeRepeating(nameof(RefreshState), 5f, 60f);
     }
 
-    // Chamado pelo PlayfabManager logo após login bem-sucedido
     public void OnLoginComplete()
     {
         RefreshState();
     }
 
-    // Chamado pelo PetSelectionManager após spawnar o pet
     public void RegisterPet(PetAnimator anim, PetClickHandler click, SpriteRenderer emoticon)
     {
         petAnimator      = anim;
@@ -138,7 +154,7 @@ public class PetStatusManager : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Criação do pet (chamado pelo PetSelectionManager)
+    // Criação do pet
     // -------------------------------------------------------
 
     public void CreatePet(string petName, string petType, int petIndex)
@@ -163,7 +179,7 @@ public class PetStatusManager : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Atualização periódica do estado
+    // Atualização periódica
     // -------------------------------------------------------
 
     public void RefreshState()
@@ -187,8 +203,8 @@ public class PetStatusManager : MonoBehaviour
 
         try
         {
-            string json = PlayFabSimpleJson.SerializeObject(result.FunctionResult);
-            var wrapper = PlayFabSimpleJson.DeserializeObject<CloudGetStateResult>(json);
+            string json    = PlayFabSimpleJson.SerializeObject(result.FunctionResult);
+            var    wrapper = PlayFabSimpleJson.DeserializeObject<CloudGetStateResult>(json);
 
             if (wrapper != null && wrapper.exists && wrapper.state != null)
             {
@@ -196,18 +212,17 @@ public class PetStatusManager : MonoBehaviour
                 CurrentState = wrapper.state;
                 LogStats("GetPetState");
 
-                UpdatePetBehavior();
-                UpdatePassiveEmoticon();
+                if (!isVisitMode)
+                {
+                    UpdatePetBehavior();
+                    UpdatePassiveEmoticon();
+                }
 
                 if (wrapper.newPoops > 0 && PetPoopManager.Instance != null)
                     PetPoopManager.Instance.SpawnPoops(wrapper.newPoops);
 
                 if (isFirstLoad && selectionManager != null)
                     selectionManager.SpawnPetFromSave(CurrentState);
-            }
-            else
-            {
-                // Sem pet cadastrado para este jogador
             }
         }
         catch (Exception e)
@@ -217,11 +232,101 @@ public class PetStatusManager : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Botões
+    // Modo Visita — público, chamado pelo VisitManager
+    // -------------------------------------------------------
+
+    /// <summary>Entra no modo visita: esconde o pet próprio e spawna o pet visitado.</summary>
+    public void EnterVisitMode(string targetPlayerId, PetState targetState)
+    {
+        isVisitMode      = true;
+        visitTargetId    = targetPlayerId;
+        visitTargetState = targetState;
+
+        if (selectionManager != null)
+        {
+            selectionManager.HideOwnPet();
+            selectionManager.SpawnVisitPet(targetState); // chama RegisterVisitPet de dentro
+        }
+
+        UpdateVisitButtons();
+    }
+
+    /// <summary>Chamado pelo PetSelectionManager ao spawnar o pet visitado.</summary>
+    public void RegisterVisitPet(PetAnimator anim, PetClickHandler click, SpriteRenderer emoticon)
+    {
+        // Salva refs do pet próprio
+        ownPetAnimator         = petAnimator;
+        ownPetClickHandler     = petClickHandler;
+        ownPetEmoticonRenderer = emoticonRenderer;
+
+        // Troca para as refs do pet visitado
+        petAnimator      = anim;
+        petClickHandler  = click;
+        emoticonRenderer = emoticon;
+
+        // Aplica o estado visual do pet visitado
+        if (visitTargetState != null)
+        {
+            petAnimator.UpdateFromPetState(visitTargetState);
+            ApplyVisitEmoticon(visitTargetState);
+        }
+    }
+
+    /// <summary>Sai do modo visita, destrói o pet visitado e restaura o pet próprio.</summary>
+    public void ExitVisitMode()
+    {
+        isVisitMode      = false;
+        visitTargetId    = null;
+        visitTargetState = null;
+
+        // Restaura refs do pet próprio
+        petAnimator      = ownPetAnimator;
+        petClickHandler  = ownPetClickHandler;
+        emoticonRenderer = ownPetEmoticonRenderer;
+        ownPetAnimator         = null;
+        ownPetClickHandler     = null;
+        ownPetEmoticonRenderer = null;
+
+        if (selectionManager != null)
+        {
+            selectionManager.DestroyVisitPet();
+            selectionManager.ShowOwnPet();
+        }
+
+        UpdatePetBehavior();
+        UpdatePassiveEmoticon();
+    }
+
+    void ApplyVisitEmoticon(PetState state)
+    {
+        Sprite sp = null;
+        if (state.isDead)       sp = deadEmoticon;
+        else if (state.isSick)  sp = sickEmoticon;
+        else if (state.isAngry) sp = barkEmoticon;
+        ApplyEmoticon(sp);
+    }
+
+    // Habilita só os botões cujo stat está abaixo de 100% no pet visitado
+    void UpdateVisitButtons()
+    {
+        if (visitTargetState == null) return;
+        var s    = visitTargetState;
+        bool alive = !s.isDead;
+
+        if (reviveButton   != null) reviveButton.gameObject.SetActive(false);
+        if (feedButton     != null) { feedButton.gameObject.SetActive(true);     feedButton.interactable     = !isBusy && alive && s.hunger      < 100f; }
+        if (bathButton     != null) { bathButton.gameObject.SetActive(true);     bathButton.interactable     = !isBusy && alive && s.cleanliness < 100f; }
+        if (carinhoButton  != null) { carinhoButton.gameObject.SetActive(true);  carinhoButton.interactable  = !isBusy && alive && s.mood        < 100f; }
+        if (medicineButton != null) { medicineButton.gameObject.SetActive(true); medicineButton.interactable = !isBusy && alive && s.health      < 100f; }
+    }
+
+    // -------------------------------------------------------
+    // Botões — roteiam para visita ou ação própria
     // -------------------------------------------------------
 
     void OnFeed()
     {
+        if (isVisitMode) { ExecuteVisitAction("Feed"); return; }
         if (!CanAct("Alimentar")) return;
         ShowBriefEmoticon(happyEmoticon, 2f);
         isBusy = true;
@@ -230,6 +335,8 @@ public class PetStatusManager : MonoBehaviour
 
     void OnBath()
     {
+        if (isVisitMode) { ExecuteVisitAction("Bathe"); return; }
+
         if (!CanAct("Banho")) return;
 
         if (petAnimator == null || petClickHandler == null)
@@ -247,6 +354,8 @@ public class PetStatusManager : MonoBehaviour
 
     void OnCarinho()
     {
+        if (isVisitMode) { ExecuteVisitAction("Carinho"); return; }
+
         if (CurrentState != null && CurrentState.isDead) return;
 
         if (CurrentState != null && CurrentState.isAngry)
@@ -257,7 +366,6 @@ public class PetStatusManager : MonoBehaviour
 
         if (CurrentState != null && CurrentState.mood >= 90f)
         {
-            // Carinho em excesso → fica irritado
             ShowBriefEmoticon(barkEmoticon, 2f);
             if (!isBusy) { isBusy = true; ExecuteAction("GiveCarinho"); }
             return;
@@ -269,9 +377,10 @@ public class PetStatusManager : MonoBehaviour
 
     void OnMedicine()
     {
+        if (isVisitMode) { ExecuteVisitAction("Medicine"); return; }
+
         if (!CanAct("Remédio")) return;
 
-        // Pet não está doente: remédio desnecessário → emoticon de bravo
         if (CurrentState != null && !CurrentState.isSick)
             ShowBriefEmoticon(angryEmoticon, 2f);
 
@@ -288,7 +397,78 @@ public class PetStatusManager : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Interação de banho (chamado pelo PetClickHandler)
+    // Ação de visita
+    // -------------------------------------------------------
+
+    void ExecuteVisitAction(string action)
+    {
+        if (isBusy || string.IsNullOrEmpty(visitTargetId)) return;
+        isBusy = true;
+
+        // Desabilita todos os botões enquanto aguarda resposta
+        SetVisitButtonsInteractable(false);
+
+        var req = new ExecuteCloudScriptRequest
+        {
+            FunctionName            = "CareForOtherPet",
+            FunctionParameter       = new CareForOtherArgs { targetPlayerId = visitTargetId, action = action },
+            GeneratePlayStreamEvent = false
+        };
+        PlayFabClientAPI.ExecuteCloudScript(req, OnVisitActionSuccess, OnVisitError);
+    }
+
+    void OnVisitActionSuccess(ExecuteCloudScriptResult result)
+    {
+        isBusy = false;
+        if (result.FunctionResult == null) { UpdateVisitButtons(); return; }
+
+        try
+        {
+            string json    = PlayFabSimpleJson.SerializeObject(result.FunctionResult);
+            var    wrapper = PlayFabSimpleJson.DeserializeObject<CloudActionResult>(json);
+
+            if (wrapper == null) { UpdateVisitButtons(); return; }
+
+            if (wrapper.success && wrapper.state != null)
+            {
+                visitTargetState = wrapper.state;
+                // Atualiza visual do pet visitado na cena
+                petAnimator?.UpdateFromPetState(visitTargetState);
+                ApplyVisitEmoticon(visitTargetState);
+                if (VisitManager.Instance != null)
+                    VisitManager.Instance.OnVisitStateUpdated(wrapper.state);
+                Debug.Log($"[PetStatus] Visita — ação aplicada. Saúde={wrapper.state.health:F0}% Fome={wrapper.state.hunger:F0}% Limpeza={wrapper.state.cleanliness:F0}% Humor={wrapper.state.mood:F0}%");
+            }
+            else if (!string.IsNullOrEmpty(wrapper.error))
+            {
+                Debug.LogWarning("[PetStatus] Visita erro: " + wrapper.error);
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("[PetStatus] Erro ao parsear resultado de visita: " + e.Message);
+        }
+
+        UpdateVisitButtons();
+    }
+
+    void OnVisitError(PlayFabError error)
+    {
+        isBusy = false;
+        Debug.LogError("[PetStatus] Erro visita PlayFab: " + error.GenerateErrorReport());
+        UpdateVisitButtons();
+    }
+
+    void SetVisitButtonsInteractable(bool value)
+    {
+        if (feedButton     != null) feedButton.interactable     = value;
+        if (bathButton     != null) bathButton.interactable     = value;
+        if (carinhoButton  != null) carinhoButton.interactable  = value;
+        if (medicineButton != null) medicineButton.interactable = value;
+    }
+
+    // -------------------------------------------------------
+    // Banho (clique no pet)
     // -------------------------------------------------------
 
     public void OnPetClickedForBath()
@@ -325,28 +505,21 @@ public class PetStatusManager : MonoBehaviour
     }
 
     // -------------------------------------------------------
-    // Emoticons
+    // Animação e Emoticons
     // -------------------------------------------------------
 
-    // Atualiza animação do pet de acordo com o estado atual
     void UpdatePetBehavior()
     {
         if (petAnimator == null || CurrentState == null) return;
-        // Não interrompe o banho
         if (petClickHandler != null && petClickHandler.CurrentMode == PetClickHandler.InteractionMode.Bath) return;
         petAnimator.UpdateFromPetState(CurrentState);
     }
 
-    // Define qual emoticon fica visível de forma contínua baseado no estado atual
     void UpdatePassiveEmoticon()
     {
         bool isDead = CurrentState != null && CurrentState.isDead;
 
-        // Mostra/esconde botão de revive
-        if (reviveButton != null)
-            reviveButton.gameObject.SetActive(isDead);
-
-        // Esconde botões de ação ao morrer
+        if (reviveButton   != null) reviveButton.gameObject.SetActive(isDead);
         if (feedButton     != null) feedButton.gameObject.SetActive(!isDead);
         if (bathButton     != null) bathButton.gameObject.SetActive(!isDead);
         if (carinhoButton  != null) carinhoButton.gameObject.SetActive(!isDead);
@@ -363,7 +536,6 @@ public class PetStatusManager : MonoBehaviour
             ApplyEmoticon(passiveEmoticon);
     }
 
-    // Mostra um emoticon por N segundos e depois restaura o passivo
     void ShowBriefEmoticon(Sprite sprite, float duration)
     {
         if (briefCoroutine != null) StopCoroutine(briefCoroutine);
@@ -376,11 +548,10 @@ public class PetStatusManager : MonoBehaviour
         ApplyEmoticon(sprite);
         yield return new WaitForSeconds(duration);
         showingBrief = false;
-        ApplyEmoticon(passiveEmoticon); // restaura emoticon de estado (doente, etc.)
+        ApplyEmoticon(passiveEmoticon);
         briefCoroutine = null;
     }
 
-    // Exibe diretamente durante o banho (sobrepõe o passivo enquanto durar a perseguição)
     void ShowEmoticon(Sprite sprite)
     {
         if (briefCoroutine != null) { StopCoroutine(briefCoroutine); briefCoroutine = null; showingBrief = false; }
@@ -446,8 +617,6 @@ public class PetStatusManager : MonoBehaviour
                 LogStats(lastAction);
                 UpdatePetBehavior();
                 UpdatePassiveEmoticon();
-
-
             }
             else if (!string.IsNullOrEmpty(wrapper.error))
             {

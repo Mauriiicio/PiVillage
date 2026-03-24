@@ -51,9 +51,12 @@ public class PetSelectionManager : MonoBehaviour
     [Header("Animacao")]
     public float framesPerSecond = 8f;
 
-    private PetData selectedPet;
-    private Image   selectedSlotImage;
-    private int     selectedPetIndex;
+    private PetData    selectedPet;
+    private Image      selectedSlotImage;
+    private int        selectedPetIndex;
+
+    private GameObject activePetGO;   // pet do próprio jogador
+    private GameObject visitPetGO;    // pet spawnado durante visita
 
     // Layout — altere aqui no codigo se precisar ajustar
     private const float  SlotWidth   = 450f;
@@ -313,6 +316,8 @@ public class PetSelectionManager : MonoBehaviour
                   minWalkTime, maxWalkTime, minRestTime, maxRestTime,
                   minActionHold, maxActionHold);
 
+        activePetGO = pet;
+
         // Registra referências no PetStatusManager
         if (PetStatusManager.Instance != null)
             PetStatusManager.Instance.RegisterPet(anim, clickHandler, emoticonSR);
@@ -322,6 +327,63 @@ public class PetSelectionManager : MonoBehaviour
             PetPoopManager.Instance.RegisterPet(pet.transform);
 
         Debug.Log("Pet spawnado: " + petName + " | " + data.type);
+    }
+
+    // ── Visita ───────────────────────────────────────────────────────────────
+
+    public void HideOwnPet()
+    {
+        if (activePetGO != null) activePetGO.SetActive(false);
+    }
+
+    public void ShowOwnPet()
+    {
+        if (activePetGO != null) activePetGO.SetActive(true);
+    }
+
+    public void SpawnVisitPet(PetState state)
+    {
+        if (visitPetGO != null) { Destroy(visitPetGO); visitPetGO = null; }
+
+        PetData[] array = (state.petType == "Cat") ? cats : dogs;
+        int       idx   = Mathf.Clamp(state.petIndex, 0, array.Length - 1);
+        PetData   data  = array[idx];
+        if (data == null) return;
+
+        Vector3 spawnPos = petSpawnPoint != null ? petSpawnPoint.position : Vector3.zero;
+
+        visitPetGO                     = new GameObject(state.petName + "_visit");
+        visitPetGO.transform.position  = spawnPos;
+        visitPetGO.transform.localScale = Vector3.one;
+
+        SpriteRenderer sr = visitPetGO.AddComponent<SpriteRenderer>();
+        sr.sortingOrder   = 1;
+
+        BoxCollider2D col = visitPetGO.AddComponent<BoxCollider2D>();
+        col.size          = new Vector2(1f, 1f);
+        col.isTrigger     = true;
+
+        PetClickHandler clickHandler = visitPetGO.AddComponent<PetClickHandler>();
+
+        GameObject emoticonGO              = new GameObject("Emoticon");
+        emoticonGO.transform.SetParent(visitPetGO.transform, false);
+        emoticonGO.transform.localPosition = new Vector3(0f, 1.2f, 0f);
+        SpriteRenderer emoticonSR          = emoticonGO.AddComponent<SpriteRenderer>();
+        emoticonSR.sortingOrder            = 2;
+        emoticonGO.SetActive(false);
+
+        PetAnimator anim = visitPetGO.AddComponent<PetAnimator>();
+        anim.Init(data, mapBoundX, mapBoundY, moveSpeed,
+                  minWalkTime, maxWalkTime, minRestTime, maxRestTime,
+                  minActionHold, maxActionHold);
+
+        if (PetStatusManager.Instance != null)
+            PetStatusManager.Instance.RegisterVisitPet(anim, clickHandler, emoticonSR);
+    }
+
+    public void DestroyVisitPet()
+    {
+        if (visitPetGO != null) { Destroy(visitPetGO); visitPetGO = null; }
     }
 
 }

@@ -292,9 +292,9 @@ handlers.GiveMedicine = function (args) {
 
     state = evaluateStats(state);
 
-    // Cura se saúde < 50 (doente ou agonizando por race condition no evaluateStats)
-    if (state.health < 50) {
-        state.health = Math.min(100, (state.health || 0) + 50);
+    // Cura se saúde < 100
+    if (state.health < 100) {
+        state.health = 100;
         state = deriveFlags(state);
     } else {
         // Remédio desnecessário → irrita o pet
@@ -419,6 +419,99 @@ handlers.GetAllPlayers = function (args) {
     } catch (e) {}
 
     return { players: registry };
+};
+
+// ----------------------------------------------------------------------------
+// GetOtherPlayerPet: lê o pet de outro jogador (somente leitura)
+// ----------------------------------------------------------------------------
+handlers.GetOtherPlayerPet = function (args) {
+    var targetPlayerId = args.targetPlayerId;
+    if (!targetPlayerId) return { exists: false, error: "targetPlayerId obrigatório." };
+
+    var data = server.GetUserData({ PlayFabId: targetPlayerId, Keys: ["PetState"] });
+    if (!data.Data || !data.Data["PetState"]) return { exists: false };
+
+    var state;
+    try { state = JSON.parse(data.Data["PetState"].Value); } catch (e) { return { exists: false }; }
+
+    // Avalia stats pelo tempo decorrido sem salvar
+    var now = Date.now();
+    if (state.statsCheckedAt && state.statsCheckedAt > 0 && !state.isDead) {
+        var elapsed = now - state.statsCheckedAt;
+        if ((state.angryUntilUtc || 0) > 0 && now >= state.angryUntilUtc) {
+            state.angryUntilUtc = 0;
+            state.mood = 10;
+        }
+        state.hunger      = Math.max(0, (state.hunger      || 50) - elapsed * HUNGER_RATE);
+        state.cleanliness = Math.max(0, (state.cleanliness || 50) - elapsed * CLEAN_RATE);
+        if (!(state.angryUntilUtc > 0)) {
+            state.mood = Math.max(0, (state.mood || 50) - elapsed * MOOD_RATE);
+        }
+        var badCondition = state.hunger < HUNGRY_THR && state.cleanliness < DIRTY_THR;
+        if (badCondition) {
+            state.health = Math.max(0, (state.health || 50) - elapsed * HEALTH_DEC_RATE);
+        } else {
+            state.health = Math.min(100, (state.health || 50) + elapsed * HEALTH_REC_RATE);
+        }
+        state = deriveFlags(state);
+    }
+
+    return { exists: true, state: state };
+};
+
+// ----------------------------------------------------------------------------
+// CareForOtherPet: cuida do pet de outro jogador sem causar dano
+// Ações válidas: "Feed", "Bathe", "Carinho", "Medicine"
+// Regra: só melhora stats, nunca aplica penalidades, não pode matar
+// ----------------------------------------------------------------------------
+handlers.CareForOtherPet = function (args) {
+    var targetPlayerId = args.targetPlayerId;
+    var action         = args.action;
+
+    if (!targetPlayerId || !action) return { success: false, error: "Parâmetros inválidos." };
+    if (targetPlayerId === currentPlayerId) return { success: false, error: "Use as ações normais para o seu próprio pet." };
+
+    var data = server.GetUserData({ PlayFabId: targetPlayerId, Keys: ["PetState"] });
+    if (!data.Data || !data.Data["PetState"]) return { success: false, error: "Pet não encontrado." };
+
+    var state;
+    try { state = JSON.parse(data.Data["PetState"].Value); } catch (e) { return { success: false, error: "Erro ao ler pet." }; }
+
+    if (state.isDead) return { success: false, error: "O pet está morto." };
+
+    // Avalia stats pelo tempo decorrido
+    state = evaluateStats(state);
+
+    var improved = false;
+
+    if (action === "Feed") {
+        if (state.hunger >= 100) return { success: false, error: "Fome já está em 100%." };
+        state.hunger = Math.min(100, state.hunger + 60);
+        improved = true;
+    } else if (action === "Bathe") {
+        if (state.cleanliness >= 100) return { success: false, error: "Limpeza já está em 100%." };
+        state.cleanliness = 100;
+        improved = true;
+    } else if (action === "Carinho") {
+        if (state.mood >= 100) return { success: false, error: "Humor já está em 100%." };
+        state.mood = Math.min(100, state.mood + 25);
+        improved = true;
+    } else if (action === "Medicine") {
+        if (state.health >= 100) return { success: false, error: "Saúde já está em 100%." };
+        state.health = 100;
+        improved = true;
+    } else {
+        return { success: false, error: "Ação desconhecida: " + action };
+    }
+
+    state = deriveFlags(state);
+
+    server.UpdateUserData({
+        PlayFabId : targetPlayerId,
+        Data      : { "PetState": JSON.stringify(state) }
+    });
+
+    return { success: true, state: state };
 };
 
 // ----------------------------------------------------------------------------
