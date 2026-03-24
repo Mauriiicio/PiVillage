@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PetAnimator : MonoBehaviour
 {
-    public enum BehaviorState { Normal, Fleeing, Sick, Angry, Sleeping }
+    public enum BehaviorState { Normal, Fleeing, Sick, Angry, Sleeping, Dead }
 
     private PetData        data;
     private SpriteRenderer sr;
@@ -51,10 +51,11 @@ public class PetAnimator : MonoBehaviour
     // Chamado pelo PetStatusManager sempre que o estado do pet mudar
     public void UpdateFromPetState(PetState state)
     {
+        if (state.isDead)  { SetBehaviorState(BehaviorState.Dead);   return; }
         if (state.isSick)  { SetBehaviorState(BehaviorState.Sick);   return; }
         if (state.isAngry) { SetBehaviorState(BehaviorState.Angry);  return; }
-        // Só volta ao normal se não estava no meio de um banho
-        if (currentState != BehaviorState.Fleeing)
+        // Só volta ao normal se não estava no meio de um banho ou sono
+        if (currentState != BehaviorState.Fleeing && currentState != BehaviorState.Sleeping)
             SetBehaviorState(BehaviorState.Normal);
     }
 
@@ -89,6 +90,7 @@ public class PetAnimator : MonoBehaviour
             case BehaviorState.Sick:     StartCoroutine(SickLoop());     break;
             case BehaviorState.Angry:    StartCoroutine(AngryLoop());    break;
             case BehaviorState.Sleeping: StartCoroutine(SleepLoop());    break;
+            case BehaviorState.Dead:     StartCoroutine(DeadLoop());     break;
         }
     }
 
@@ -229,6 +231,19 @@ public class PetAnimator : MonoBehaviour
 
         if (currentState == BehaviorState.Sleeping)
             SetBehaviorState(BehaviorState.Normal);
+    }
+
+    // Pet morreu — deita e fica parado para sempre
+    IEnumerator DeadLoop()
+    {
+        Sprite[] frames = GetLyingFrames();
+        if (frames != null && frames.Length > 0)
+        {
+            yield return StartCoroutine(PlayOnce(frames));
+            sr.sprite = frames[frames.Length - 1];
+        }
+        // Fica parado; só sai desse estado via Revive (que spawna novo pet)
+        while (currentState == BehaviorState.Dead) yield return null;
     }
 
     // -------------------------------------------------------

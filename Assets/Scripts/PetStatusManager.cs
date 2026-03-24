@@ -28,6 +28,7 @@ public class PetState
     public bool isSick   = false;
     public bool isAngry  = false;
     public bool isDead   = false;
+    public long angryUntilUtc = 0; // Unix ms — quando o timer de raiva expira
 
     // Sistema de cocô
     public long lastPoopGeneratedUtc = 0;
@@ -70,6 +71,7 @@ public class PetStatusManager : MonoBehaviour
     public Button bathButton;
     public Button carinhoButton;
     public Button medicineButton;
+    public Button reviveButton;
 
     [Header("Referencia")]
     public PetSelectionManager selectionManager;
@@ -81,6 +83,7 @@ public class PetStatusManager : MonoBehaviour
     public Sprite sickEmoticon;     // Doente   — emotions.png
     public Sprite barkEmoticon;     // Latido   — emotions.png
     public Sprite sleepingEmoticon; // Dormindo — emotions.png
+    public Sprite deadEmoticon;     // Morto    — emotions.png
 
     // Estado atual do pet, disponível para outros scripts lerem
     public PetState CurrentState { get; private set; }
@@ -115,6 +118,7 @@ public class PetStatusManager : MonoBehaviour
         if (bathButton     != null) bathButton.onClick.AddListener(OnBath);
         if (carinhoButton  != null) carinhoButton.onClick.AddListener(OnCarinho);
         if (medicineButton != null) medicineButton.onClick.AddListener(OnMedicine);
+        if (reviveButton   != null) { reviveButton.onClick.AddListener(OnRevive); reviveButton.gameObject.SetActive(false); }
 
         InvokeRepeating(nameof(RefreshState), 5f, 60f);
     }
@@ -190,6 +194,7 @@ public class PetStatusManager : MonoBehaviour
             {
                 bool isFirstLoad = CurrentState == null;
                 CurrentState = wrapper.state;
+                LogStats("GetPetState");
 
                 UpdatePetBehavior();
                 UpdatePassiveEmoticon();
@@ -274,6 +279,14 @@ public class PetStatusManager : MonoBehaviour
         ExecuteAction("GiveMedicine");
     }
 
+    void OnRevive()
+    {
+        if (isBusy) return;
+        if (CurrentState == null || !CurrentState.isDead) return;
+        isBusy = true;
+        ExecuteAction("RevivePet");
+    }
+
     // -------------------------------------------------------
     // Interação de banho (chamado pelo PetClickHandler)
     // -------------------------------------------------------
@@ -327,7 +340,20 @@ public class PetStatusManager : MonoBehaviour
     // Define qual emoticon fica visível de forma contínua baseado no estado atual
     void UpdatePassiveEmoticon()
     {
-        if (isSleeping)                passiveEmoticon = sleepingEmoticon;
+        bool isDead = CurrentState != null && CurrentState.isDead;
+
+        // Mostra/esconde botão de revive
+        if (reviveButton != null)
+            reviveButton.gameObject.SetActive(isDead);
+
+        // Esconde botões de ação ao morrer
+        if (feedButton     != null) feedButton.gameObject.SetActive(!isDead);
+        if (bathButton     != null) bathButton.gameObject.SetActive(!isDead);
+        if (carinhoButton  != null) carinhoButton.gameObject.SetActive(!isDead);
+        if (medicineButton != null) medicineButton.gameObject.SetActive(!isDead);
+
+        if (isDead)                    passiveEmoticon = deadEmoticon;
+        else if (isSleeping)           passiveEmoticon = sleepingEmoticon;
         else if (CurrentState == null) passiveEmoticon = null;
         else if (CurrentState.isSick)  passiveEmoticon = sickEmoticon;
         else if (CurrentState.isAngry) passiveEmoticon = barkEmoticon;
@@ -417,6 +443,7 @@ public class PetStatusManager : MonoBehaviour
             if (wrapper.success && wrapper.state != null)
             {
                 CurrentState = wrapper.state;
+                LogStats(lastAction);
                 UpdatePetBehavior();
                 UpdatePassiveEmoticon();
 
@@ -439,5 +466,15 @@ public class PetStatusManager : MonoBehaviour
         Debug.LogError("[PetStatus] Erro PlayFab: " + error.GenerateErrorReport());
     }
 
-
+    void LogStats(string context)
+    {
+        if (CurrentState == null) return;
+        Debug.Log(
+            $"[PetStatus] [{context}] {CurrentState.petName} ({CurrentState.petType})\n" +
+            $"  Fome={CurrentState.hunger:F0}%  Limpeza={CurrentState.cleanliness:F0}%  " +
+            $"Temperamento={CurrentState.mood:F0}%  Saúde={CurrentState.health:F0}%\n" +
+            $"  Faminto={CurrentState.isHungry}  Sujo={CurrentState.isDirty}  " +
+            $"Doente={CurrentState.isSick}  Bravo={CurrentState.isAngry}  Morto={CurrentState.isDead}"
+        );
+    }
 }

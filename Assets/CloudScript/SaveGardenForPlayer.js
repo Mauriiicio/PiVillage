@@ -26,10 +26,11 @@ var HEALTH_DEC_RATE  = 100 / HEALTH_DECAY_MS;
 var HEALTH_REC_RATE  = 100 / HEALTH_RECOVER_MS;
 
 // Limiares para flags booleanas derivadas
-var HUNGRY_THR  = 30;   // hunger   < 30  → isHungry
-var DIRTY_THR   = 30;   // clean    < 30  → isDirty
-var ANGRY_THR   = 20;   // mood     < 20  → isAngry
-var SICK_THR    = 30;   // health   < 30  → isSick
+var HUNGRY_THR      = 30;               // hunger  < 30  → isHungry
+var DIRTY_THR       = 30;               // clean   < 30  → isDirty
+var SICK_THR        = 30;               // health  < 30  → isSick
+// isAngry é controlado por timer, não por threshold de mood
+var ANGRY_DURATION_MS = 2 * 60 * 1000; // 2 minutos bravo ao receber carinho em excesso
 
 // ============================================================================
 // Funções auxiliares de persistência
@@ -65,10 +66,19 @@ function evaluateStats(state) {
 
     var elapsed = now - state.statsCheckedAt;
 
+    // Verifica se o timer de raiva expirou
+    if ((state.angryUntilUtc || 0) > 0 && now >= state.angryUntilUtc) {
+        state.angryUntilUtc = 0;
+        state.mood = 10; // começa a recuperação com 10%
+    }
+
     // Depleta hunger, cleanliness e mood pelo tempo decorrido
     state.hunger      = Math.max(0, (state.hunger      || 50) - elapsed * HUNGER_RATE);
     state.cleanliness = Math.max(0, (state.cleanliness || 50) - elapsed * CLEAN_RATE);
-    state.mood        = Math.max(0, (state.mood        || 50) - elapsed * MOOD_RATE);
+    // Mood só depleta se não está bravo (timer ativo congela o mood em 0)
+    if (!(state.angryUntilUtc > 0)) {
+        state.mood = Math.max(0, (state.mood || 50) - elapsed * MOOD_RATE);
+    }
 
     // Saúde: decai quando faminto E sujo; recupera quando condições estão OK
     var badCondition = state.hunger < HUNGRY_THR && state.cleanliness < DIRTY_THR;
@@ -85,11 +95,13 @@ function evaluateStats(state) {
 
 // Deriva os flags booleanos a partir dos valores numéricos atuais
 function deriveFlags(state) {
+    var now = Date.now();
     state.isHungry = state.hunger      < HUNGRY_THR;
     state.isDirty  = state.cleanliness < DIRTY_THR;
-    state.isAngry  = state.mood        < ANGRY_THR;
     state.isSick   = state.health      < SICK_THR;
     state.isDead   = state.health      <= 0;
+    // isAngry é puramente baseado no timer (carinho em excesso)
+    state.isAngry  = (state.angryUntilUtc || 0) > now;
     return state;
 }
 
@@ -157,6 +169,7 @@ handlers.CreatePet = function (args) {
         isSick               : false,
         isAngry              : false,
         isDead               : false,
+        angryUntilUtc        : 0,
 
         // Cocô
         pendingPoops         : 0,
@@ -253,9 +266,10 @@ handlers.GiveCarinho = function (args) {
     state = evaluateStats(state);
 
     if (!state.isDead && !state.isAngry) {
-        if (state.mood >= 90) {
-            // Carinho em excesso → mood cai, pet fica irritado
-            state.mood = Math.max(0, state.mood - 40);
+        if (state.mood >= 100) {
+            // Carinho em excesso: mood vai a 0 e pet fica bravo por 2 minutos
+            state.mood         = 0;
+            state.angryUntilUtc = Date.now() + ANGRY_DURATION_MS;
         } else {
             state.mood = Math.min(100, (state.mood || 0) + 25);
         }
@@ -273,17 +287,45 @@ handlers.GiveMedicine = function (args) {
     var state = loadPetState();
     if (!state) return { success: false, error: "Pet nao encontrado." };
 
+    // Só bloqueia se o pet JÁ estava morto antes desta chamada
+    if (state.isDead) return { success: false, error: "Pet esta morto." };
+
     state = evaluateStats(state);
 
-    if (!state.isDead) {
-        if (state.isSick) {
-            state.health = Math.min(100, (state.health || 0) + 50);
-        } else {
-            // Remédio desnecessário → irrita o pet
-            state.mood = Math.max(0, (state.mood || 50) - 30);
-        }
+    // Cura se saúde < 50 (doente ou agonizando por race condition no evaluateStats)
+    if (state.health < 50) {
+        state.health = Math.min(100, (state.health || 0) + 50);
+        state = deriveFlags(state);
+    } else {
+        // Remédio desnecessário → irrita o pet
+        state.mood = Math.max(0, (state.mood || 50) - 30);
         state = deriveFlags(state);
     }
+
+    savePetState(state);
+    return { success: true, state: state };
+};
+
+// ----------------------------------------------------------------------------
+// RevivePet: revive o pet morto com todos os stats em 50%
+// ----------------------------------------------------------------------------
+handlers.RevivePet = function (args) {
+    var state = loadPetState();
+    if (!state) return { success: false, error: "Pet nao encontrado." };
+
+    if (!state.isDead) return { success: false, error: "Pet nao esta morto." };
+
+    var now = Date.now();
+    state.hunger         = 50;
+    state.cleanliness    = 50;
+    state.mood           = 50;
+    state.health         = 50;
+    state.statsCheckedAt = now;
+    state.isDead         = false;
+    state.isSick         = false;
+    state.isAngry        = false;
+    state.isHungry       = false;
+    state.isDirty        = false;
 
     savePetState(state);
     return { success: true, state: state };

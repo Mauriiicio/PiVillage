@@ -4983,7 +4983,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 22, y: -25}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 604.6588, y: 50}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1123064820
 CanvasRenderer:
@@ -5013,10 +5013,10 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Nome Dog
+  m_text: Nome
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 202f468bbe670374a8667854eb15e172, type: 2}
+  m_sharedMaterial: {fileID: -308371177159636148, guid: 202f468bbe670374a8667854eb15e172, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5040,8 +5040,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 47.99
+  m_fontSizeBase: 47.99
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -9160,13 +9160,15 @@ MonoBehaviour:
   bathButton: {fileID: 1724471773}
   carinhoButton: {fileID: 798985846}
   medicineButton: {fileID: 819010348}
+  reviveButton: {fileID: 409931364}
   selectionManager: {fileID: 1792237355}
   bathEmoticon: {fileID: -1335665877, guid: c3b6a11a7c1ae274cb157d0a2e823ebb, type: 3}
   angryEmoticon: {fileID: -454533021, guid: c3b6a11a7c1ae274cb157d0a2e823ebb, type: 3}
   happyEmoticon: {fileID: -828135495, guid: c3b6a11a7c1ae274cb157d0a2e823ebb, type: 3}
   sickEmoticon: {fileID: 1623372704, guid: c3b6a11a7c1ae274cb157d0a2e823ebb, type: 3}
   barkEmoticon: {fileID: -1953528188, guid: c3b6a11a7c1ae274cb157d0a2e823ebb, type: 3}
-  sleepingEmoticon: {fileID: 0}
+  sleepingEmoticon: {fileID: -1279785529, guid: c3b6a11a7c1ae274cb157d0a2e823ebb, type: 3}
+  deadEmoticon: {fileID: 5644105481271152317, guid: ffc58bb154fbdc1449dbb03d8d6bd9a4, type: 3}
 --- !u!1 &1831604410
 GameObject:
   m_ObjectHideFlags: 0
